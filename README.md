@@ -24,7 +24,7 @@ docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic
 docker-compose down
 ```
 
-Why `--network host`? SIPp in the container must reach Asterisk on localhost:5060.
+Why `--network host`? The Asterisk lab exposes port 5060 on the host. Using `--network host` makes `localhost:5060` inside the test container connect to the same Asterisk instance, allowing SIPp to reach it.
 
 ## Native install (optional)
 
@@ -48,22 +48,34 @@ Examples:
 Options:
 - `--junit` writes `voiptest-results.xml` to the output dir.
 - `--out DIR` sets the output dir (default: current directory).
-  - Example: `voiptest run examples/ --junit --out test-results`
+
+## Supported in v0.1
+
+✅ Basic call outcomes: `answered` | `failed` | `busy` | `no_answer`  
+✅ Account-based caller/callee resolution  
+✅ Literal destinations (phone numbers, extensions)  
+✅ Matrix expansion for multiple destinations  
+✅ Final SIP code assertions  
+✅ JUnit XML output for CI integration  
+
+❌ DTMF/IVR navigation (planned for v0.2)  
+❌ RTP/audio validation (planned for v0.2)  
+❌ Call transfers and multi-leg scenarios (planned for v0.2)  
 
 ## Example tests
 
-- `examples/smoke_basic.yaml` — happy-path call 1001 -> 2000 (expects 200)
-- `examples/negative_404.yaml` — missing user (expects 404 failure)
-- `examples/smoke_matrix.yaml` — same call fanned out via matrix
+- `examples/smoke_basic.yaml` — happy-path call caller → callee (expects 200)
+- `examples/negative_404.yaml` — call to non-existent extension (expects 404)
+- `examples/smoke_matrix.yaml` — fan out calls to multiple destinations
 
 ## Write a test
 
 ```yaml
-version: "1.0"
+version: 1
 name: "Basic Smoke"
 
 target:
-  host: "localhost"
+  host: "127.0.0.1"
   port: 5060
   transport: "udp"
   domain: "localhost"
@@ -77,25 +89,31 @@ accounts:
     password: "secret456"
 
 call:
-  from: "sip:1001@localhost"
-  to: "sip:2000@localhost"
+  from: "caller"          # Account key
+  to: "callee"            # Account key OR literal (e.g., "2000")
   timeout_s: 30
 
 expect:
-  outcome: "success"      # success | failure | timeout
+  outcome: "answered"     # answered | failed | busy | no_answer
   final_sip_code: 200
 
-# Optional: fan out destinations
+# Optional: fan out to multiple destinations
 # matrix:
-#   to: ["sip:2000@localhost", "sip:2001@localhost"]
+#   to: ["2000", "2001", "2002"]
 ```
+
+Outcomes:
+- **answered**: Call received 200 OK
+- **failed**: Call received 4xx/5xx/6xx error (configurable with `final_sip_code`)
+- **busy**: Call received 486 Busy
+- **no_answer**: Call timed out or received no response
 
 ## CI one-liner (Docker)
 
 ```bash
 docker build -t voiptest .
 docker-compose up -d && sleep 10
-docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results
+docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic.yaml
 docker-compose down
 ```
 

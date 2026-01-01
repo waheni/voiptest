@@ -235,6 +235,29 @@ def run_sipp(config: VoipTestConfig) -> Dict[str, Any]:
         }
 
 
+def resolve_destination(config: VoipTestConfig, dest_key: str) -> str:
+    """Resolve a destination (account key or literal) to a username.
+    
+    Args:
+        config: Test configuration
+        dest_key: Either an account key (e.g., "callee") or a literal (e.g., "2000")
+    
+    Returns:
+        Username/extension to use as destination
+    """
+    # Get all account names from the accounts object
+    accounts_data = config.accounts.model_dump()
+    
+    # Check if dest_key is an account key
+    if dest_key in accounts_data:
+        account = getattr(config.accounts, dest_key, None)
+        if account and hasattr(account, 'username'):
+            return account.username
+    
+    # It's a literal destination (e.g., "2000" or a phone number)
+    return dest_key
+
+
 def generate_csv_file(csv_path: Path, config: VoipTestConfig) -> None:
     """Generate CSV injection file for SIPp.
 
@@ -242,22 +265,22 @@ def generate_csv_file(csv_path: Path, config: VoipTestConfig) -> None:
     First line: SEQUENTIAL
     Second line: to;from_user;domain;password
     """
-    # Extract components from URIs
-    to_uri = config.call.to
-    from_uri = config.call.from_
-
-    # Simple extraction (could be more robust)
-    to_value = to_uri.replace("sip:", "").split("@")[0]
-    from_value = from_uri.replace("sip:", "").split("@")[0]
+    # Resolve caller and destination
+    from_account = config.accounts.caller
+    from_user = from_account.username
+    
+    # Resolve 'to' - can be account key or literal
+    to_user = resolve_destination(config, config.call.to)
+    
     domain = config.target.domain or config.target.host
-    password = config.accounts.caller.password or ""
+    password = from_account.password or ""
 
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f, delimiter=";")
         # First line must be SEQUENTIAL, RANDOM, or USER
         f.write("SEQUENTIAL\n")
         # Write data row (no header for field names)
-        writer.writerow([to_value, from_value, domain, password])
+        writer.writerow([to_user, from_user, domain, password])
 
 
 def extract_final_sip_code(message_log: str) -> Optional[int]:
@@ -294,28 +317,30 @@ def determine_outcome(sipp_result: Dict[str, Any], config: VoipTestConfig) -> st
         config: Test configuration
 
     Returns:
-        Outcome string: "success", "failure", "timeout", "error"
+        Outcome string: "answered", "failed", "busy", "no_answer"
     """
     exit_code = sipp_result.get("exit_code", -1)
     final_code = sipp_result.get("final_code")
     reason = sipp_result.get("reason", "")
 
-    # Check for timeout
+    # Check for timeout/no_answer
     if "timeout" in reason.lower():
-        return "timeout"
+        return "no_answer"
 
     # Check SIP response code
     if final_code:
         if 200 <= final_code < 300:
-            return "success"
+            return "answered"
+        elif final_code == 486:  # Busy Here
+            return "busy"
         elif 400 <= final_code < 700:
-            return "failure"
+            return "failed"
 
     # Check exit code
     if exit_code == 0:
-        return "success"
+        return "answered"
 
-    return "failure"
+    return "failed"
 
 
 def check_expectations(
@@ -332,18 +357,33 @@ def check_expectations(
         True if expectations are met, False otherwise
     """
     expect = config.expect
+    final_code = actual["sip_code"]
+    actual_outcome = actual["outcome"]
 
-    # Check outcome
-    if expect.outcome == "success" and actual["outcome"] != "success":
-        return False
-    elif expect.outcome == "failure" and actual["outcome"] == "success":
-        return False
-    elif expect.outcome == "timeout" and actual["outcome"] != "timeout":
-        return False
+    # Outcome-based expectations
+    if expect.outcome == "answered":
+        # Must receive 200 OK
+        if actual_outcome != "answered" or final_code != 200:
+            return False
+    elif expect.outcome == "busy":
+        # Must receive 486 Busy or similar
+        if actual_outcome != "busy" or final_code != 486:
+            return False
+    elif expect.outcome == "failed":
+        # Must NOT be success/answered, and must be a failure
+        if actual_outcome == "answered":
+            return False
+        # If final_sip_code is specified, enforce it
+        if expect.final_sip_code is not None and final_code != expect.final_sip_code:
+            return False
+    elif expect.outcome == "no_answer":
+        # Timeout or no response
+        if actual_outcome not in ("no_answer", "failed"):
+            return False
 
-    # Check final SIP code if specified
+    # Check final SIP code if specified (overrides outcome logic for verification)
     if expect.final_sip_code is not None:
-        if actual["sip_code"] != expect.final_sip_code:
+        if final_code != expect.final_sip_code:
             return False
 
     # Additional checks could be added for answer_within_s, min_duration_s

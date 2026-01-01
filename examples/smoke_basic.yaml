@@ -1,5 +1,5 @@
 # Basic smoke test - successful call scenario
-version: "1.0"
+version: 1
 name: "Basic Smoke Test - Successful Call"
 
 target:
@@ -19,13 +19,13 @@ accounts:
     display_name: "Test Callee"
 
 call:
-  from: "sip:1001@localhost"
-  to: "sip:2000@localhost"
+  from: "caller"
+  to: "callee"
   timeout_s: 30
   max_duration_s: 60
 
 expect:
-  outcome: "success"
+  outcome: "answered"
   final_sip_code: 200
   answer_within_s: 10
   min_duration_s: 5
