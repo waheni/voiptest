@@ -26,10 +26,10 @@ docker-build:
 	docker build -t voiptest .
 
 docker-test:
-	docker run --rm --network host -v $$(pwd):/work voiptest examples/smoke_basic.yaml
+	docker run --rm --network host -v $$(pwd):/work voiptest run examples/smoke_basic.yaml
 
 docker-test-all:
-	docker run --rm --network host -v $$(pwd):/work voiptest examples/ --junit --out test-results
+	docker run --rm --network host -v $$(pwd):/work voiptest run examples/ --junit --out test-results
 
 docker-shell:
 	docker run --rm -it --network host -v $$(pwd):/work --entrypoint /bin/bash voiptest
@@ -39,10 +39,10 @@ install:
 	pip install -e .
 
 test:
-	voiptest examples/smoke_basic.yaml
+	voiptest run examples/smoke_basic.yaml
 
 test-all:
-	voiptest examples/ --junit --out test-results
+	voiptest run examples/ --junit --out test-results
 
 # Lab targets
 lab-start:

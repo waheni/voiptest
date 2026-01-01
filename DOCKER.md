@@ -10,13 +10,13 @@ docker build -t voiptest .
 
 ```bash
 # Run single test
-docker run --rm --network host -v $(pwd):/work voiptest examples/smoke_basic.yaml
+docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic.yaml
 
 # Run all tests
-docker run --rm --network host -v $(pwd):/work voiptest examples/
+docker run --rm --network host -v $(pwd):/work voiptest run examples/
 
 # With JUnit output
-docker run --rm --network host -v $(pwd):/work voiptest examples/ --junit --out test-results
+docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results
 
 # View help
 docker run --rm voiptest --help
@@ -33,8 +33,8 @@ alias voiptest='docker run --rm --network host -v $(pwd):/work voiptest'
 Then use like a native command:
 
 ```bash
-voiptest examples/smoke_basic.yaml
-voiptest examples/ --junit --out test-results
+voiptest run examples/smoke_basic.yaml
+voiptest run examples/ --junit --out test-results
 ```
 
 ## With Asterisk Lab
@@ -45,7 +45,7 @@ docker-compose up -d
 sleep 10
 
 # Run tests
-docker run --rm --network host -v $(pwd):/work voiptest examples/
+docker run --rm --network host -v $(pwd):/work voiptest run examples/
 
 # Stop lab
 docker-compose down
@@ -77,7 +77,7 @@ docker-compose down
 ### Run with custom network
 
 ```bash
-docker run --rm --network my-network -v $(pwd):/work voiptest examples/
+docker run --rm --network my-network -v $(pwd):/work voiptest run examples/
 ```
 
 ### Debug inside container
@@ -85,7 +85,7 @@ docker run --rm --network my-network -v $(pwd):/work voiptest examples/
 ```bash
 docker run --rm -it --network host -v $(pwd):/work --entrypoint /bin/bash voiptest
 # Inside container:
-voiptest examples/smoke_basic.yaml
+voiptest run examples/smoke_basic.yaml
 sipp -v
 python --version
 ```
@@ -93,7 +93,7 @@ python --version
 ### Mount only examples directory
 
 ```bash
-docker run --rm --network host -v $(pwd)/examples:/work/examples voiptest examples/
+docker run --rm --network host -v $(pwd)/examples:/work/examples voiptest run examples/
 ```
 
 ## CI/CD Integration
@@ -105,7 +105,7 @@ docker run --rm --network host -v $(pwd)/examples:/work/examples voiptest exampl
   run: docker build -t voiptest .
 
 - name: Run tests
-  run: docker run --rm --network host -v $(pwd):/work voiptest examples/ --junit --out test-results
+  run: docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results
 ```
 
 ### GitLab CI
@@ -113,14 +113,14 @@ docker run --rm --network host -v $(pwd)/examples:/work/examples voiptest exampl
 ```yaml
 script:
   - docker build -t voiptest .
-  - docker run --rm --network host -v $(pwd):/work voiptest examples/ --junit --out test-results
+  - docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results
 ```
 
 ### Jenkins
 
 ```groovy
 sh 'docker build -t voiptest .'
-sh 'docker run --rm --network host -v $(pwd):/work voiptest examples/ --junit --out test-results'
+sh 'docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results'
 ```
 
 ## Comparison: Docker vs Native

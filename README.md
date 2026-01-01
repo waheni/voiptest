@@ -20,7 +20,7 @@ Direct without Make:
 ```bash
 docker build -t voiptest .
 docker-compose up -d && sleep 10
-docker run --rm --network host -v $(pwd):/work voiptest examples/smoke_basic.yaml
+docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic.yaml
 docker-compose down
 ```
 
@@ -31,19 +31,24 @@ Why `--network host`? SIPp in the container must reach Asterisk on localhost:506
 You need Python 3.10+ and SIPp in PATH.
 ```bash
 pip install -e .
-voiptest examples/smoke_basic.yaml
+voiptest run examples/smoke_basic.yaml
 ```
 
 ## Usage
 
 ```bash
-voiptest PATH [--junit] [--out DIR]
+voiptest run PATH [--junit] [--out DIR]
 # PATH can be a single YAML file or a directory of YAML files
 ```
 
 Examples:
-- Single test: `voiptest examples/smoke_basic.yaml`
-- All in dir with JUnit: `voiptest examples/ --junit --out test-results`
+- Minimal: `voiptest run examples/smoke_basic.yaml`
+- All in dir with JUnit: `voiptest run examples/ --junit --out test-results`
+
+Options:
+- `--junit` writes `voiptest-results.xml` to the output dir.
+- `--out DIR` sets the output dir (default: current directory).
+  - Example: `voiptest run examples/ --junit --out test-results`
 
 ## Example tests
 
@@ -90,7 +95,7 @@ expect:
 ```bash
 docker build -t voiptest .
 docker-compose up -d && sleep 10
-docker run --rm --network host -v $(pwd):/work voiptest examples/ --junit --out test-results
+docker run --rm --network host -v $(pwd):/work voiptest run examples/ --junit --out test-results
 docker-compose down
 ```
 
@@ -114,4 +119,4 @@ voiptest/
 
 ## License
 
-Specify your license here.
+MIT. See `LICENSE`.

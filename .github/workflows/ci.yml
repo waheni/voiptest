@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t voiptest .
+
+      - name: Run smoke test
+        run: docker run --rm --network host -v ${{ github.workspace }}:/work -w /work voiptest run examples/smoke_basic.yaml
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: voiptest-artifacts
+          path: |
+            test-results/**
+            voiptest-results.xml
+            **/*.log
+          if-no-files-found: ignore
