@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  asterisk:
+    image: andrius/asterisk:18
+    container_name: voiptest-asterisk
+    hostname: asterisk
+    ports:
+      - "5060:5060/udp"   # SIP UDP
+      - "5060:5060/tcp"   # SIP TCP
+      - "10000-10100:10000-10100/udp"  # RTP ports
+    volumes:
+      - ./lab/asterisk/extensions.conf:/etc/asterisk/extensions.conf
+      - ./lab/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf
+    networks:
+      - voiptest
+    restart: unless-stopped
+    # Run Asterisk in console mode with verbose output
+    command: ["asterisk", "-cvvvv"]
+
+networks:
+  voiptest:
+    driver: bridge

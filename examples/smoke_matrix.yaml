@@ -1,0 +1,38 @@
+# Matrix test - test calling multiple destinations
+version: "1.0"
+name: "Smoke Test Matrix - Multiple Destinations"
+
+target:
+  host: "localhost"
+  port: 5060
+  transport: "udp"
+  domain: "localhost"
+
+accounts:
+  caller:
+    username: "1001"
+    password: "secret123"
+    display_name: "Test Caller"
+  callee:
+    username: "2000"
+    password: "secret456"
+    display_name: "Test Callee"
+
+call:
+  from: "sip:1001@localhost"
+  to: "sip:2000@localhost"  # This will be overridden by matrix
+  timeout_s: 30
+  max_duration_s: 60
+
+expect:
+  outcome: "success"
+  final_sip_code: 200
+  answer_within_s: 10
+  min_duration_s: 3
+
+# Matrix expansion - will create separate tests for each destination
+matrix:
+  to:
+    - "sip:2000@localhost"
+    - "sip:2001@localhost"
+    - "sip:2002@localhost"
