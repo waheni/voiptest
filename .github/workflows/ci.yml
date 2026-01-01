@@ -7,6 +7,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      asterisk:
+        image: andrius/asterisk:18
+        ports:
+          - 5060:5060/udp
+          - 5060:5060/tcp
+        volumes:
+          - ${{ github.workspace }}/lab/asterisk/extensions.conf:/etc/asterisk/extensions.conf
+          - ${{ github.workspace }}/lab/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf
+        options: >-
+          --health-cmd "asterisk -rx 'core show version'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -15,18 +30,11 @@ jobs:
         if: hashFiles('Dockerfile') != ''
         run: docker build -t voiptest .
 
-      - name: Start Asterisk lab
-        run: |
-          docker compose up -d
-          echo "Waiting for Asterisk to start..."
-          sleep 10
+      - name: Wait for Asterisk
+        run: sleep 15
 
       - name: Run smoke test
         run: docker run --rm --network host -v ${{ github.workspace }}:/work -w /work voiptest run examples/smoke_basic.yaml
-
-      - name: Stop Asterisk lab
-        if: always()
-        run: docker compose down
 
       - name: Upload artifacts on failure
         if: failure()
