@@ -15,8 +15,18 @@ jobs:
         if: hashFiles('Dockerfile') != ''
         run: docker build -t voiptest .
 
+      - name: Start Asterisk lab
+        run: |
+          docker-compose up -d
+          echo "Waiting for Asterisk to start..."
+          sleep 10
+
       - name: Run smoke test
         run: docker run --rm --network host -v ${{ github.workspace }}:/work -w /work voiptest run examples/smoke_basic.yaml
+
+      - name: Stop Asterisk lab
+        if: always()
+        run: docker-compose down
 
       - name: Upload artifacts on failure
         if: failure()
