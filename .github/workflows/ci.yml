@@ -21,10 +21,6 @@ jobs:
             andrius/asterisk:18
           echo "Waiting for Asterisk to start..."
           sleep 15
-          echo "Checking Asterisk status..."
-          docker logs asterisk | tail -20
-          docker exec asterisk asterisk -rx "core show version" || echo "Asterisk not ready yet"
-          docker exec asterisk asterisk -rx "pjsip show endpoints" || echo "PJSIP not ready yet"
 
       - name: Build Docker image
         run: docker build -t voiptest .
@@ -33,24 +29,7 @@ jobs:
         run: |
           docker run --rm --network host \
             -v ${{ github.workspace }}/examples:/work/examples \
-            --entrypoint python voiptest -c "
-          import json, sys
-          from voiptest import runner
-          from pathlib import Path
-          res = runner.run_test_file(Path('examples/smoke_basic.yaml'))
-          print(json.dumps(res, indent=2))
-          sys.exit(0 if res['passed'] else 1)
-          "
-
-      - name: Debug on failure
-        if: failure()
-        run: |
-          echo "Asterisk logs:"
-          docker logs asterisk | tail -50
-          echo "Asterisk endpoints:"
-          docker exec asterisk asterisk -rx "pjsip show endpoints"
-          echo "Asterisk contacts:"
-          docker exec asterisk asterisk -rx "pjsip show contacts"
+            voiptest run examples/smoke_basic.yaml
 
       - name: Stop Asterisk
         if: always()
