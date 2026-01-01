@@ -17,7 +17,7 @@ jobs:
 
       - name: Start Asterisk lab
         run: |
-          docker-compose up -d
+          docker compose up -d
           echo "Waiting for Asterisk to start..."
           sleep 10
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Stop Asterisk lab
         if: always()
-        run: docker-compose down
+        run: docker compose down
 
       - name: Upload artifacts on failure
         if: failure()
