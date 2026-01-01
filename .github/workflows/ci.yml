@@ -26,7 +26,16 @@ jobs:
         run: docker build -t voiptest .
 
       - name: Run smoke test
-        run: docker run --rm --network host -v ${{ github.workspace }}:/work -w /work voiptest run examples/smoke_basic.yaml
+        run: |
+          docker run --rm --network host -v ${{ github.workspace }}:/work -w /work \
+            --entrypoint python voiptest -c "
+          import json, sys
+          from voiptest import runner
+          from pathlib import Path
+          res = runner.run_test_file(Path('examples/smoke_basic.yaml'))
+          print(json.dumps(res, indent=2))
+          sys.exit(0 if res['passed'] else 1)
+          "
 
       - name: Stop Asterisk
         if: always()
