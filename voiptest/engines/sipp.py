@@ -142,7 +142,7 @@ def run_sipp(config: VoipTestConfig) -> Dict[str, Any]:
         cmd = [
             "sipp",
             config.target.host,
-            "-i", "0.0.0.0",  # Local IP
+            "-i", "127.0.0.1",  # Local IP (use IPv4 to match localhost resolution)
             "-p", "5070",  # Local port (avoid conflict with target)
             "-sf", str(scenario_file),
             "-inf", str(csv_file),
