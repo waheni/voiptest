@@ -1,6 +1,6 @@
-# Negative test - expecting 404 Not Found
+# Negative test - expecting 603 Decline
 version: 1
-name: "Negative Test - 404 Not Found"
+name: "Negative Test - 603 Decline"
 
 target:
   host: "127.0.0.1"
@@ -16,10 +16,10 @@ accounts:
 
 call:
   from: "caller"
-  to: "9999"  # Non-existent extension (literal)
+  to: "5555"  # Non-existent extension
   timeout_s: 15
   max_duration_s: 30
 
 expect:
   outcome: "failed"
-  final_sip_code: 404  # Not Found
+  final_sip_code: 603  # Decline - used by Asterisk for non-existent extensions
