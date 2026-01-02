@@ -1,5 +1,6 @@
-# VoIPTest Docker Image
-# Contains Python 3.10+, SIPp, and voiptest CLI
+# VoIPTest Docker Image - Development Environment
+# Contains Python 3.10+, SIPp, and Python dependencies
+# Mount your code as a volume for live development!
 
 FROM ubuntu:22.04
 
@@ -31,22 +32,28 @@ RUN git clone --depth 1 --branch v3.7.3 https://github.com/SIPp/sipp.git /tmp/si
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
-# Create working directory
+# Create app directory for dependencies installation
 WORKDIR /app
 
-# Copy project files
-COPY setup.py pyproject.toml ./
-COPY voiptest/ ./voiptest/
+# Copy ONLY requirements to leverage Docker cache
+# This layer only rebuilds when requirements.txt changes
+COPY requirements.txt ./
 
-# Upgrade pip and setuptools, then install voiptest
+# Install Python dependencies
 RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip3 install --no-cache-dir .
+    pip3 install --no-cache-dir -r requirements.txt
 
-# Set working directory for user files
+# Set working directory for mounted code
 WORKDIR /work
 
-# Set entrypoint to voiptest command
-ENTRYPOINT ["voiptest"]
+# Set Python path to include /work for module imports
+ENV PYTHONPATH=/work:$PYTHONPATH
+
+# Default entrypoint runs Python with voiptest module
+# Code is mounted from host, so changes are instant!
+ENTRYPOINT ["python", "-m", "voiptest.cli"]
+
+CMD ["--help"]
 
 # Default command (show help)
 CMD ["--help"]

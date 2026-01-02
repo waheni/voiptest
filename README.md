@@ -156,6 +156,46 @@ Default lab values:
 
 ---
 
+## 💻 Development
+
+The Docker image is **environment-only** (Python + SIPp + dependencies). Your code is mounted as a volume for instant feedback!
+
+**Only rebuild when `requirements.txt` changes:**
+
+```bash
+docker build -t voiptest .
+```
+
+**Make code changes** - they're live immediately:
+
+```bash
+# Edit voiptest/cli.py, voiptest/engines/sipp.py, etc.
+# Then run without rebuilding:
+docker run --rm --network host -v "$PWD:/work" voiptest run examples/
+```
+
+**Development workflow:**
+
+```bash
+# 1. Build image once
+make docker-build
+
+# 2. Start lab
+make lab-start
+
+# 3. Edit Python files
+vim voiptest/runner.py
+
+# 4. Test immediately (no rebuild!)
+make docker-test
+
+# 5. Iterate
+# Changes to .py files are instant!
+# Only rebuild if you modify requirements.txt
+```
+
+---
+
 ## 🛣 Roadmap
 
 | Version | Features |
