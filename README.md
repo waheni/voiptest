@@ -1,72 +1,73 @@
-# 📞 voiptest — VoIP Regression Smoke Testing (CI‑Ready)
+# 📞 voiptest — VoIP Regression Testing for CI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**voiptest** is an open‑source CLI tool designed to help VoIP / SIP teams automate basic call validation — especially in CI/CD — so you *never ship a broken call flow again*.
+**voiptest** is an open-source CLI tool to automate **VoIP call regression testing** using simple YAML files.
 
-It’s simple, developer‑friendly, and built to work with Docker and existing VoIP stacks (Asterisk, Kamailio, Freeswitch, SBCs).
+It is designed for:
+- VoIP engineers
+- DevOps / SRE teams
+- CI/CD pipelines
+- Anyone tired of manually testing call flows
+
+✅ Docker-first  
+✅ CI-friendly  
+✅ Built around real SIP behavior  
+✅ Designed for automation  
 
 ---
 
 ## 🚀 Why voiptest?
 
 Testing VoIP systems manually is:
-- slow
-- error‑prone
-- hard to reproduce
-- often ignored until production breaks
+- slow  
+- error-prone  
+- hard to reproduce  
+- usually skipped in CI  
 
-Existing tools like **SIPp** are powerful, but:
-- hard to maintain XML scenarios
-- not designed for CI regression testing
-- difficult to integrate into pipelines
+Existing tools (like SIPp) are powerful but:
+- hard to maintain
+- XML-heavy
+- not CI-friendly
+- not designed for regression testing
 
-**voiptest** fills the gap:
-✔ YAML‑based test definitions  
+**voiptest solves this by providing:**
+
+✔ Simple YAML test definitions  
 ✔ Clear PASS / FAIL results  
-✔ CI‑friendly (JUnit output)  
-✔ Docker‑first (no SIPp installation headaches)  
+✔ CI-ready output (JUnit)  
+✔ Docker-based execution  
+✔ Real SIP calls  
 
 ---
 
-## 📦 Features (v0.1)
+## ✨ Features (v0.1)
 
-- 🧪 Validate basic call flows (answered / failed / busy / no_answer)
-- 📋 YAML test definitions
-- 🔁 Matrix testing (multiple destinations)
-- 📊 JUnit output for CI systems
-- 🐳 Docker‑first execution
-- ☎️ Asterisk lab included
+- 📄 YAML-based test definitions
+- 📞 Validate call outcomes:
+  - answered
+  - failed
+  - busy
+  - no_answer
+- 🔁 Matrix testing
+- 📊 JUnit output
+- 🐳 Docker-first execution
+- ☎️ Asterisk test lab included
 
 ---
 
-## 🛠 Installation
+## 📦 Installation
 
-### 🔹 Option A — Docker (recommended)
+### ✅ Docker (recommended)
 
 ```bash
 docker build -t voiptest .
 ```
 
 Run a test:
+
 ```bash
 docker run --rm --network host   -v "$PWD:/work" -w /work   voiptest run examples/smoke_basic.yaml
-```
-
-> ℹ️ `--network host` allows SIP/RTP traffic to reach your local VoIP stack.
-
----
-
-### 🔹 Option B — Native (Advanced)
-
-```bash
-pip install -e .
-sudo apt install sip-tester
-```
-
-Run:
-```bash
-voiptest run examples/smoke_basic.yaml
 ```
 
 ---
@@ -130,26 +131,50 @@ jobs:
 
 ---
 
+## 🧪 Local Test Lab (Asterisk)
+
+Start lab:
+
+```bash
+make lab-start
+```
+
+Stop lab:
+
+```bash
+make lab-stop
+```
+
+Default lab values:
+
+| Item | Value |
+|------|------|
+| SIP Host | 127.0.0.1 |
+| SIP Port | 5060 |
+| Caller | 1001 |
+| Callee | 2000 |
+
+---
+
 ## 🛣 Roadmap
 
 | Version | Features |
 |-------|----------|
-| v0.1 | Basic calls, YAML, Docker, CI |
-| v0.2 | DTMF / IVR navigation |
-| v0.3 | RTP / audio validation |
-| v0.4 | Scenario builder |
-| v1.0 | Dashboard + reporting |
+| v0.1 | Basic calls, Docker, CI |
+| v0.2 | DTMF / IVR |
+| v0.3 | RTP validation |
+| v1.0 | Dashboard |
 
 ---
 
-## ❤️ Contributing
+## 🤝 Contributing
 
-We welcome:
-- Feature requests
+Contributions are welcome:
 - Bug reports
+- Feature requests
 - Pull requests
 
-👉 Open an issue to propose new features or improvements.
+Open an issue to start.
 
 ---
 
@@ -159,8 +184,8 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
-## 🙌 Final Note
+## ❤️ Final Note
 
-This project is built for engineers who want **confidence in their VoIP deployments**.
+Built for engineers who want **confidence in VoIP deployments**.
 
-If you use it, star it ⭐ and share feedback!
+⭐ Star the repo if you find it useful.
