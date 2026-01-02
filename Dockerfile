@@ -35,23 +35,32 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 \
 # Create app directory for dependencies installation
 WORKDIR /app
 
-# Copy ONLY requirements to leverage Docker cache
-# This layer only rebuilds when requirements.txt changes
+# Copy and install Python dependencies
 COPY requirements.txt ./
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
     pip3 install --no-cache-dir -r requirements.txt
 
+# Copy project files for installation
+COPY setup.py pyproject.toml ./
+COPY voiptest/ ./voiptest/
+
+# Install voiptest package
+RUN pip3 install --no-cache-dir .
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Set working directory for mounted code
 WORKDIR /work
 
-# Set Python path to include /work for module imports
+# Set Python path to include /work for module imports (dev mode)
 ENV PYTHONPATH=/work:$PYTHONPATH
 
-# Default entrypoint runs Python with voiptest module
-# Code is mounted from host, so changes are instant!
-ENTRYPOINT ["python", "-m", "voiptest.cli"]
+# Use wrapper script as entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 CMD ["--help"]
 
