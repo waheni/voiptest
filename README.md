@@ -1,140 +1,166 @@
-# VoIPTest
+# 📞 voiptest — VoIP Regression Smoke Testing (CI‑Ready)
 
-Lightweight SIP smoke tests for CI. Define calls in YAML, run them with SIPp, get a pass/fail and optional JUnit XML.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**What you can do**
-- Prove a basic INVITE/200/ACK/BYE flow still works (or fails with the code you expect)
-- Run against the bundled Asterisk lab or your own PBX/SBC
-- Fan out destinations with a simple matrix, and emit JUnit for CI
+**voiptest** is an open‑source CLI tool designed to help VoIP / SIP teams automate basic call validation — especially in CI/CD — so you *never ship a broken call flow again*.
 
-## Quick start (Docker)
+It’s simple, developer‑friendly, and built to work with Docker and existing VoIP stacks (Asterisk, Kamailio, Freeswitch, SBCs).
 
-```bash
-make docker-build     # build image with SIPp and cli
-make lab-start        # start Asterisk lab (docker-compose)
-make docker-test      # run examples/smoke_basic.yaml
-make lab-stop         # stop lab
-```
+---
 
-Direct without Make:
+## 🚀 Why voiptest?
+
+Testing VoIP systems manually is:
+- slow
+- error‑prone
+- hard to reproduce
+- often ignored until production breaks
+
+Existing tools like **SIPp** are powerful, but:
+- hard to maintain XML scenarios
+- not designed for CI regression testing
+- difficult to integrate into pipelines
+
+**voiptest** fills the gap:
+✔ YAML‑based test definitions  
+✔ Clear PASS / FAIL results  
+✔ CI‑friendly (JUnit output)  
+✔ Docker‑first (no SIPp installation headaches)  
+
+---
+
+## 📦 Features (v0.1)
+
+- 🧪 Validate basic call flows (answered / failed / busy / no_answer)
+- 📋 YAML test definitions
+- 🔁 Matrix testing (multiple destinations)
+- 📊 JUnit output for CI systems
+- 🐳 Docker‑first execution
+- ☎️ Asterisk lab included
+
+---
+
+## 🛠 Installation
+
+### 🔹 Option A — Docker (recommended)
+
 ```bash
 docker build -t voiptest .
-docker-compose up -d && sleep 10
-docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic.yaml
-docker-compose down
 ```
 
-Why `--network host`? The Asterisk lab exposes port 5060 on the host. Using `--network host` makes `localhost:5060` inside the test container connect to the same Asterisk instance, allowing SIPp to reach it.
+Run a test:
+```bash
+docker run --rm --network host   -v "$PWD:/work" -w /work   voiptest run examples/smoke_basic.yaml
+```
 
-## Native install (optional)
+> ℹ️ `--network host` allows SIP/RTP traffic to reach your local VoIP stack.
 
-You need Python 3.10+ and SIPp in PATH.
+---
+
+### 🔹 Option B — Native (Advanced)
+
 ```bash
 pip install -e .
+sudo apt install sip-tester
+```
+
+Run:
+```bash
 voiptest run examples/smoke_basic.yaml
 ```
 
-## Usage
+---
 
-```bash
-voiptest run PATH [--junit] [--out DIR]
-# PATH can be a single YAML file or a directory of YAML files
-```
-
-Examples:
-- Minimal: `voiptest run examples/smoke_basic.yaml`
-- All in dir with JUnit: `voiptest run examples/ --junit --out test-results`
-
-Options:
-- `--junit` writes `voiptest-results.xml` to the output dir.
-- `--out DIR` sets the output dir (default: current directory).
-
-## Supported in v0.1
-
-✅ Basic call outcomes: `answered` | `failed` | `busy` | `no_answer`  
-✅ Account-based caller/callee resolution  
-✅ Literal destinations (phone numbers, extensions)  
-✅ Matrix expansion for multiple destinations  
-✅ Final SIP code assertions  
-✅ JUnit XML output for CI integration  
-
-❌ DTMF/IVR navigation (planned for v0.2)  
-❌ RTP/audio validation (planned for v0.2)  
-❌ Call transfers and multi-leg scenarios (planned for v0.2)  
-
-## Example tests
-
-- `examples/smoke_basic.yaml` — happy-path call caller → callee (expects 200)
-- `examples/negative_404.yaml` — call to non-existent extension (expects 404)
-- `examples/smoke_matrix.yaml` — fan out calls to multiple destinations
-
-## Write a test
+## 🧪 Example Test
 
 ```yaml
 version: 1
-name: "Basic Smoke"
+name: "Basic answered call"
 
 target:
   host: "127.0.0.1"
   port: 5060
   transport: "udp"
-  domain: "localhost"
 
 accounts:
   caller:
     username: "1001"
-    password: "secret123"
+    domain: "lab.local"
   callee:
     username: "2000"
-    password: "secret456"
+    domain: "lab.local"
 
 call:
-  from: "caller"          # Account key
-  to: "callee"            # Account key OR literal (e.g., "2000")
-  timeout_s: 30
+  from: "caller"
+  to: "callee"
+  timeout_s: 20
 
 expect:
-  outcome: "answered"     # answered | failed | busy | no_answer
+  outcome: "answered"
   final_sip_code: 200
-
-# Optional: fan out to multiple destinations
-# matrix:
-#   to: ["2000", "2001", "2002"]
 ```
 
-Outcomes:
-- **answered**: Call received 200 OK
-- **failed**: Call received 4xx/5xx/6xx error (configurable with `final_sip_code`)
-- **busy**: Call received 486 Busy
-- **no_answer**: Call timed out or received no response
+---
 
-## CI one-liner (Docker)
+## 🔁 CI Integration (GitHub Actions)
 
-```bash
-docker build -t voiptest .
-docker-compose up -d && sleep 10
-docker run --rm --network host -v $(pwd):/work voiptest run examples/smoke_basic.yaml
-docker-compose down
+```yaml
+name: VoIP Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run VoIP tests
+        run: |
+          docker build -t voiptest .
+          docker run --rm --network host             -v "${{ github.workspace }}:/work"             -w /work voiptest run examples/smoke_basic.yaml --junit report.xml
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: voiptest-report
+          path: report.xml
 ```
 
-## Project layout
+---
 
-```
-voiptest/
-  voiptest/            # CLI + engines
-    engines/sipp.py    # SIPp runner
-    engines/sipp_scenarios/uac_basic.xml
-  examples/            # Ready-to-run YAML tests
-  lab/asterisk/        # Test lab config
-  docker-compose.yml   # Lab services
-```
+## 🛣 Roadmap
 
-## Troubleshooting (quick)
+| Version | Features |
+|-------|----------|
+| v0.1 | Basic calls, YAML, Docker, CI |
+| v0.2 | DTMF / IVR navigation |
+| v0.3 | RTP / audio validation |
+| v0.4 | Scenario builder |
+| v1.0 | Dashboard + reporting |
 
-- Needs host networking: add `--network host` when targeting localhost services.
-- "SIPp not found" (native): install SIPp from your package manager.
-- Scenario missing when installed: ensure you reinstall after `git pull` (scenario XML is shipped in the wheel).
+---
 
-## License
+## ❤️ Contributing
 
-MIT. See `LICENSE`.
+We welcome:
+- Feature requests
+- Bug reports
+- Pull requests
+
+👉 Open an issue to propose new features or improvements.
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE)
+
+---
+
+## 🙌 Final Note
+
+This project is built for engineers who want **confidence in their VoIP deployments**.
+
+If you use it, star it ⭐ and share feedback!
