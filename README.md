@@ -218,6 +218,13 @@ Open an issue to start.
 
 ---
 
+# 🧑‍💻 Author
+**Heni Wael (Neurahex)**  
+GitHub: https://github.com/waheni  
+Email: *waelheni@neurahex.com*
+
+---
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE)
