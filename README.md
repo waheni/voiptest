@@ -216,6 +216,8 @@ Contributions are welcome:
 
 Open an issue to start.
 
+If you tried this, I’d really appreciate feedback — even ‘this is useless’.
+
 ---
 
 # 🧑‍💻 Author
